@@ -12,13 +12,13 @@
 
 #include <stdio.h>
 
-	struct s_node {
-		int           value;
-		struct s_node *right;
-		struct s_node *left;
-	};
+struct s_node {
+	int           value;
+	struct s_node *right;
+	struct s_node *left;
+};
 
-void ft_print_right(struct s_node *root)
+void print_root(struct s_node *root)
 {
 	if (!root)
 		return ;
@@ -26,18 +26,27 @@ void ft_print_right(struct s_node *root)
 		printf(" %d", root->value);
 	else
 	{
-		ft_print_right(root->left);
-		ft_print_right(root->right);
+		print_root(root->left);
+		print_root(root->right);
 	}
 }
 
-void ft_print_left(struct s_node *root)
+void print_left(struct s_node *root)
 {
 	if (!root)
 		return ;
 	printf(" %d", root->value);
-	ft_print_left(root->left);
-	ft_print_right(root->right);
+	print_left(root->left);
+	print_root(root->right);
+}
+
+void print_right(struct s_node *root)
+{
+	if (!root)
+		return ;
+	print_root(root->left);
+	print_right(root->right);
+	printf(" %d", root->value);
 }
 
 void perimeter(struct s_node *root)
@@ -45,7 +54,7 @@ void perimeter(struct s_node *root)
 	if (!root)
 		return ;
 	printf("%d", root->value);
-	ft_print_left(root->left);
-	ft_print_right(root->right);
+	print_left(root->left);
+	print_right(root->right);
 	printf("\n");
 }

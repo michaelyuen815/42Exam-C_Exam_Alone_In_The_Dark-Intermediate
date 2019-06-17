@@ -10,130 +10,105 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include "ord_alphlong.h"
+#include <unistd.h>
 
+#define BL_SP(ch) (ch == 32 || ch == 9)
+#define BL_UP(ch) (ch >= 65 && ch <= 90)
+#define LOWER(ch) (ch + (BL_UP(ch) ? 32 : 0))
 
-
-t_list *ft_list_new(char *str, int len)
+typedef struct s_node t_node;
+struct s_node
 {
-	t_list *ret;
+	int		n;
+	char	*str;
+	t_node	*left;
+	t_node	*right;
+};
 
-	ret = malloc(sizeof(t_list));
-	ret->len = len;
-	ret->next = NULL;
-	ret->str = malloc(sizeof(t_string));
-	ret->str->str = str;
-	ret->str->next = NULL;
+int ft_length_word(const char *s)
+{
+	int ret;
+
+	ret = 0;
+	while (s[ret] && !BL_SP(s[ret]))
+		ret++;
 	return (ret);
 }
 
-t_string *ft_string_init(t_string *t_str, char *str, int len)
+int ft_strncmp(const char *s1, const char *s2, int n)
 {
-	t_string *t_cur;
-	t_string *t_tmp;
-
-	if (ft_strncmp(t_str->str, str, len) > 0)
+	while (LOWER(*s1) == LOWER(*s2) && *s1 && *s2 && n--)
 	{
-		t_tmp = malloc(sizeof(t_string));
-		t_tmp->str = str;
-		t_tmp->next = t_str;
-		t_str = t_tmp;
+		s1++;
+		s2++;
 	}
-	else
-	{
-		t_cur = t_str;
-		while (t_cur->next)
-		{
-			if (ft_strncmp(t_str->next->str, str, len) > 0)
-				break;
-			t_cur = t_cur->next;
-		}
-		t_tmp = t_cur->next;
-		t_cur->next = malloc(sizeof(t_string));
-		t_cur->next->str = str;
-		t_cur->next->next = t_tmp;
-	}
-	return (t_str);
+	if (!n)
+		return (0);
+	return (LOWER(*s1) - LOWER(*s2));
 }
 
-t_list *ft_list_init(t_list *list, char *str, int len)
+t_node	*ft_node_create(const char *s, int n)
 {
-	t_list *tmp;
-	t_list *tgt;
+	t_node *ret;
+
+	ret = (t_node*)malloc(sizeof(t_node));
+	if (!ret)
+		return (NULL);
+	ret->n = n;
+	ret->str = (char*)s;
+	ret->left = NULL;
+	ret->right = NULL;
+	return (ret);
+}
+
+int		ft_node_print(t_node *list, int pt)
+{
 
 	if (!list)
-		list = ft_list_new(str, len);
-	else
+		return (pt);
+	pt = ft_node_print(list->left, pt);
+	if (pt && pt < list->n)
+		write(1, "\n", 1);
+	else if (pt == list->n)
+		write(1, " ", 1);
+	write(1, list->str, list->n);
+	pt = list->n;
+	pt = ft_node_print(list->right, pt);
+	return (pt);
+}
+
+t_node	*ft_node_insert(t_node *list, const char *s, int n)
+{
+	if (!list)
 	{
-		tmp = list;
-		if (list->len > len)
-		{
-			tgt = ft_list_new(str, len);
-			tgt->next = list;
-			list = tgt;
-		}
-		else
-		{
-			while (tmp->next)
-			{
-				if (tmp->next->len > len)
-					break;
-				tmp = tmp->next;
-			}
-			if (tmp->len == len)
-				tmp->str = ft_string_init(tmp->str, str, len);
-			else
-			{
-				tgt = tmp->next;
-				tmp->next = ft_list_new(str, len);
-				tmp->next->next = tgt;
-			}
-		}
+		list = ft_node_create(s, n);
+		return (list);
 	}
-	
+	if (n > list->n || (n == list->n && ft_strncmp(s, list->str, n) >= 0))
+		list->right = ft_node_insert(list->right, s, n);
+	if (n < list->n || (n == list->n && ft_strncmp(s, list->str, n) < 0))
+		list->left = ft_node_insert(list->left, s, n);
 	return (list);
 }
 
 int main(int ac, char **av)
 {
-	t_list *list;
-	t_string *str;
-	char *tmp;
-	int len;
+	t_node *list;
+	int n;
 
-	list = NULL;
 	if (ac == 2)
 	{
-		if (*av[1])
+		list = NULL;
+		while (*av[1])
 		{
-			while (*av[1])
-			{
-				tmp = ft_strchr(av[1], ' ');
-				len = tmp ? (int)(tmp - av[1]) : ft_strlen(av[1]);
-				list = ft_list_init(list, av[1], len);
-				av[1] += len; 
-				if (*av[1])
-					av[1]++;
-			}
-			while (list)
-			{
-				str = list->str;
-				while (str)
-				{
-					write(1, str->str, list->len);
-					str = str->next;
-					if (str)
-						write(1, " ", 1);
-				}
-				write(1, "\n", 1);
-				list = list->next;
-			}
+			n = ft_length_word(av[1]);
+			list = ft_node_insert(list, av[1], n);
+			av[1] += n;
+			av[1] += (*av[1] ? 1 : 0);
 		}
+		ft_node_print(list, 0);
 	}
-	else
-		write(1, "\n", 1);
+	write(1, "\n", 1);
 	return (0);
 }
